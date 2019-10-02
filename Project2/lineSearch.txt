@@ -1,0 +1,48 @@
+    def lineSearch(self):
+        
+        if inexact:
+            rho = 0.1 #should be in [0,0.5)
+            alphaL = 0 #initial lower bound
+            alphaU = 1e99 #initial upper bound 
+            sigma = 0.7
+            tau = 0.1
+            xsi = 9
+            xL = self.pos + alphaL*self.d
+            fL = self.f(xL)
+            fpL = np.transpose(self.getGradient(xL))*self.d
+            alpha0 = np.linalg.norm(self.gp)**2/(np.transpose(self.gp)*self.Hp*self.gp)
+            x0 = self.pos + alpha0*self.d
+            f0 = self.f(x0)
+            
+            # Goldstein conditions
+            
+            LC = f0 >= fL + (1-rho)*(alpha0-alphaL)*fpL
+            RC = f0 <= fL + rho*(alpha0-alphaL)*fpL
+            
+            
+            while not LC*RC:
+                if not LC:
+                    fp0 = np.transpose(self.getGradient(x0))*self.d
+                    deltaAplha = ((alpha0-alphaL)*fp0)/(fpL-fp0)
+                    deltaAlpha = max(deltaAlpha,tau*(alpha0-alphaL))
+                    deltaAlpha = min(deltaAlpha,xsi*(alpha0-alphaL))
+                    
+                    alphaL = alpha0
+                    alpha0 = alpha0 + deltaAlpha
+                if LC:
+                    if not RC:
+                        alphaU = min(alpha0,alphaU)
+                        alpha0 = alphaL + ((alpha0-alphaL)**2 * fpL)/(2*(fL-f0+(alpha0-alphaL)*fpL))
+                        alpha0 = max(alpha0,alphaL+tau*(alphaU-alphaL))
+                        alpha0 = min(alpha0,alphaU-tau*(alphaU-alphaL))
+                
+                xL = self.pos + alphaL*self.d
+                fL = self.f(xL)    
+                fpL = np.transpose(self.getGradient(xL))*self.d
+                x0 = self.pos + alpha0*self.d
+                f0 = self.f(x0)
+            
+                LC = f0 >= fL + (1-rho)*(alpha0-alphaL)*fpL
+                RC = f0 <= fL + rho*(alpha0-alphaL)*fpL
+            
+        return alpha0 
